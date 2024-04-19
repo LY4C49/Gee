@@ -11,13 +11,8 @@ import (
 
 func main() {
 	r := gee.New()
-	//r.GET("/", func(w http.ResponseWriter, r *http.Request) {
-	//	fmt.Println("Hello, I am a server")
-	//})
-	//r.GET("/time", testMethod1)
-
 	r.GET("/", func(c *gee.Context) {
-		c.String(http.StatusOK, "Hello, I am %s\n", "World")
+		c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
 	})
 
 	r.GET("/hello", func(c *gee.Context) {
@@ -25,12 +20,14 @@ func main() {
 		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
 	})
 
-	r.POST("/login", func(c *gee.Context) {
-		c.JSON(http.StatusOK, gee.H{
-			"username": c.PostForm("username"),
-			"password": c.PostForm("password"),
-		})
+	r.GET("/hello/:name", func(c *gee.Context) {
+		// expect /hello/geektutu
+		c.String(http.StatusOK, "hello %s, you're at %s\n", c.Param("name"), c.Path)
 	})
 
-	r.Run("localhost:8888")
+	r.GET("/assets/*filepath", func(c *gee.Context) {
+		c.JSON(http.StatusOK, gee.H{"filepath": c.Param("filepath")})
+	})
+
+	r.Run(":8888")
 }
