@@ -1,44 +1,32 @@
 package main
 
 import (
+	"fmt"
 	"gee/gee"
 	"net/http"
+	"time"
 )
 
-//func testMethod1(w http.ResponseWriter, r *http.Request) {
-//	fmt.Println("Current Time is: ", time.Now())
-//}
+type student struct {
+	Name string
+	Age  int8
+}
+
+func FormatAsDate(t time.Time) string {
+	year, month, day := t.Date()
+	return fmt.Sprintf("%d-%02d-%02d", year, month, day)
+}
 
 func main() {
-	r := gee.New()
-	r.GET("/index", func(c *gee.Context) {
-		c.HTML(http.StatusOK, "<h1>Index Page</h1>")
+	r := gee.Default()
+	r.GET("/", func(c *gee.Context) {
+		c.String(http.StatusOK, "Hello Geektutu\n")
 	})
-	v1 := r.Group("/v1")
-	{
-		v1.GET("/", func(c *gee.Context) {
-			c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
-		})
+	// index out of range for testing Recovery()
+	r.GET("/panic", func(c *gee.Context) {
+		names := []string{"geektutu"}
+		c.String(http.StatusOK, names[100])
+	})
 
-		v1.GET("/hello", func(c *gee.Context) {
-			// expect /hello?name=geektutu
-			c.String(http.StatusOK, "hello %s, you're at %s\n", c.Query("name"), c.Path)
-		})
-	}
-	v2 := r.Group("/v2")
-	{
-		v2.GET("/hello/:name", func(c *gee.Context) {
-			// expect /hello/geektutu
-			c.String(http.StatusOK, "hello %s, you're at %s\n", c.Param("name"), c.Path)
-		})
-		v2.POST("/login", func(c *gee.Context) {
-			c.JSON(http.StatusOK, gee.H{
-				"username": c.PostForm("username"),
-				"password": c.PostForm("password"),
-			})
-		})
-
-	}
-
-	r.Run(":8888")
+	r.Run(":9999")
 }

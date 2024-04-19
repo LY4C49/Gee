@@ -65,7 +65,7 @@ func (r *Router) getRoute(method string, path string) (*node, map[string]string)
 			}
 			if part[0] == '*' && len(part) > 1 {
 				params[part[1:]] = searchParts[i]
-				break // *filepath 是匹配文件，only one!
+				break
 			}
 
 		}
@@ -88,9 +88,10 @@ func (r *Router) handle(c *Context) {
 	if node != nil {
 		key := c.Method + "-" + node.full_path
 		c.Params = params
-		r.handlers[key](c)
+		//r.handlers[key](c)
+		c.handlers = append(c.handlers, r.handlers[key])
 	} else {
 		c.String(http.StatusNotFound, "404 NOT FOUND: %s\n", c.Path)
 	}
-
+	c.Next()
 }

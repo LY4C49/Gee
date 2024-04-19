@@ -7,6 +7,8 @@ import (
 )
 
 type Context struct {
+	engine *Engine
+
 	// init info
 	Writer http.ResponseWriter
 	Req    *http.Request
@@ -18,10 +20,28 @@ type Context struct {
 
 	//response info
 	StatusCode int
+
+	//middlewares
+	handlers []HandlerFunc
+	index    int
 }
 
 func newContext(w http.ResponseWriter, r *http.Request) *Context {
-	return &Context{Writer: w, Req: r, Path: r.URL.Path, Method: r.Method}
+	return &Context{
+		Writer: w,
+		Req:    r,
+		Path:   r.URL.Path,
+		Method: r.Method,
+		index:  -1,
+	}
+}
+
+// === Call all middlewares! ===
+func (c *Context) Next() {
+	c.index++
+	for ; c.index < len(c.handlers); c.index++ {
+		c.handlers[c.index](c)
+	}
 }
 
 func (c *Context) Param(key string) string {
@@ -65,13 +85,20 @@ func (c *Context) JSON(code int, obj interface{}) {
 	}
 }
 
-func (c *Context) HTML(code int, html string) {
-	c.SetHeader("Content-Type", "text/plain")
+func (c *Context) HTML(code int, name string, data interface{}) {
+	c.SetHeader("Content-Type", "text/html")
 	c.Status(code)
-	c.Writer.Write([]byte(html))
+	if err := c.engine.htmlTemplates.ExecuteTemplate(c.Writer, name, data); err != nil {
+		c.Fail(500, err.Error())
+	}
 }
 
 func (c *Context) Data(code int, data []byte) {
 	c.Status(code)
 	c.Writer.Write(data)
+}
+
+func (c *Context) Fail(code int, errinfo string) {
+	c.Status(code)
+	c.Writer.Write([]byte(errinfo))
 }
